@@ -1,0 +1,80 @@
+# -*- coding: utf-8 -*-
+# Visualize the distribution of the 97 leap days (Feb 29) within a 400-year Gregorian cycle.
+# Example cycle: 2000–2399 (inclusive). 2000-01-01 was a Saturday.
+
+import matplotlib.pyplot as plt
+from collections import Counter, defaultdict
+
+# Weekday indexing: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+WEEKDAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+
+# Gregorian leap year rule
+def is_leap(y: int) -> bool:
+    return (y % 4 == 0) and ((y % 100 != 0) or (y % 400 == 0))
+
+# Cycle bounds and starting weekday for 1 Jan 2000 (Saturday -> 5)
+start_year, end_year = 2000, 2399
+wd_1jan = 5  # 0=Mon ... 6=Sun
+
+# Feb 29 is 31 (Jan) + 28 (Feb) = 59 days after Jan 1 in a leap year; 59 % 7 = 3
+FEB29_OFFSET = 59 % 7
+
+weekday_counts = Counter()
+century_counts = defaultdict(int)
+by_year_weekday = []  # (year, weekday_index) for each leap year
+
+wd_year_start = wd_1jan
+for year in range(start_year, end_year + 1):
+    if is_leap(year):
+        wd_feb29 = (wd_year_start + FEB29_OFFSET) % 7
+        weekday_counts[wd_feb29] += 1
+        century_counts[(year // 100) * 100] += 1
+        by_year_weekday.append((year, wd_feb29))
+    # Advance to next year's Jan 1 weekday
+    wd_year_start = (wd_year_start + (366 if is_leap(year) else 365)) % 7
+
+# Prepare arrays in Mon..Sun order
+weekday_values = [weekday_counts[i] for i in range(7)]
+centuries = sorted(century_counts.keys())
+century_values = [century_counts[c] for c in centuries]
+
+# --- Figure 1: Weekday distribution of leap day ---
+plt.figure(figsize=(8, 4))
+plt.bar(WEEKDAYS, weekday_values, color='#4C78A8')
+plt.title('Weekday distribution of Feb 29 (Gregorian 400-year cycle: 2000–2399)')
+plt.ylabel('Count of leap days (Feb 29)')
+for i, v in enumerate(weekday_values):
+    plt.text(i, v + 0.2, str(v), ha='center', va='bottom', fontsize=9)
+plt.tight_layout()
+plt.savefig('leapday_weekday_distribution_2000_2399.png', dpi=160)
+plt.close()
+
+# --- Figure 2: Leap-day counts per century ---
+labels = [f'{c}–{c+99}' for c in centuries]
+plt.figure(figsize=(8, 4))
+plt.bar(labels, century_values, color='#F58518')
+plt.title('Leap-day counts per century (2000–2399)')
+plt.ylabel('Count of leap days (Feb 29)')
+for i, v in enumerate(century_values):
+    plt.text(i, v + 0.2, str(v), ha='center', va='bottom', fontsize=9)
+plt.tight_layout()
+plt.savefig('leapday_century_counts_2000_2399.png', dpi=160)
+plt.close()
+
+# --- Figure 3: Timeline of weekday by leap year ---
+years = [y for y, _ in by_year_weekday]
+wd_idx = [w for _, w in by_year_weekday]
+colors = ['#4C78A8','#F58518','#54A24B','#E45756','#72B7B2','#B279A2','#FF9DA6']
+
+plt.figure(figsize=(10, 3.2))
+for y, w in by_year_weekday:
+    plt.plot([y, y], [0, w], color='#BBBBBB', lw=0.5, alpha=0.6)
+plt.scatter(years, wd_idx, c=[colors[w] for w in wd_idx], s=28, edgecolor='k', linewidths=0.3)
+plt.yticks(range(7), WEEKDAYS)
+plt.ylim(-0.5, 6.5)
+plt.xlabel('Year')
+plt.title('Weekday of Feb 29 for each leap year (2000–2399)')
+plt.grid(axis='y', linestyle=':', alpha=0.4)
+plt.tight_layout()
+plt.savefig('leapday_weekday_timeline_2000_2399.png', dpi=160)
+plt.close()
