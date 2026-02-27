@@ -1,0 +1,101 @@
+# -*- coding: utf-8 -*- 
+
+# Annahmen: 
+
+# - Jahr 0 beginnt mit Montag (0) 
+
+# - Schaltjahr alle 4 Jahre (y % 4 == 0) 
+
+# - Monatslängen wie im gregorianischen Kalender (Feb: 29 in Schaltjahren, sonst 28) 
+
+# - Wochentage: 0=Mo, 1=Di, 2=Mi, 3=Do, 4=Fr, 5=Sa, 6=So 
+
+ 
+
+from collections import Counter 
+
+ 
+
+WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'] 
+
+MONTHS_COMMON = [31,28,31,30,31,30,31,31,30,31,30,31] 
+
+MONTHS_LEAP   = [31,29,31,30,31,30,31,31,30,31,30,31] 
+
+ 
+
+def is_leap(y: int) -> bool: 
+
+    return y % 4 == 0 
+
+ 
+
+def weekday_1jan(year: int) -> int: 
+
+    """Wochentag des 1.1. des gegebenen Jahres (0=Mo,...,6=So), Jahr 0 ist Mo.""" 
+
+    wd = 0  # Jahr 0: Montag 
+
+    for y in range(year): 
+
+        wd = (wd + (366 if is_leap(y) else 365)) % 7 
+
+    return wd 
+
+ 
+
+def counts_13th_in_year(year: int): 
+
+    """Zählt, wie oft der 13. auf jeden Wochentag fällt (0..6) im gegebenen Jahr.""" 
+
+    first_wd = weekday_1jan(year) 
+
+    months = MONTHS_LEAP if is_leap(year) else MONTHS_COMMON 
+
+    counts = Counter({i: 0 for i in range(7)}) 
+
+    wd = first_wd  # Wochentag des 1. eines Monats; start: 1. Jan 
+
+     
+
+    for mlen in months: 
+
+        wd13 = (wd + 12) % 7  # 13. ist 12 Tage nach dem 1. 
+
+        counts[wd13] += 1 
+
+        wd = (wd + mlen) % 7  # Wochentag des 1. des nächsten Monats 
+
+    return first_wd, [counts[i] for i in range(7)] 
+
+ 
+
+# Tabelle 0..28 drucken 
+
+header = ['fiktives Jahr', 'Erster Wochentag'] + WEEKDAYS 
+
+print('{:>13} | {:^17} | '.format(header[0], header[1]) + ' | '.join('{:>2}'.format(h) for h in WEEKDAYS)) 
+
+print('-' * 80) 
+
+ 
+
+totals = [0]*7 
+
+for year in range(0, 29): 
+
+    first_wd, counts = counts_13th_in_year(year) 
+
+    for i, v in enumerate(counts): 
+
+        totals[i] += v 
+
+    print('{:>13} | {:^17} | '.format(year, WEEKDAYS[first_wd]) + ' | '.join('{:>2}'.format(v) for v in counts)) 
+
+ 
+
+print('-' * 80) 
+
+print('{:>13} | {:^17} | '.format('Summe (0–28)', '') + ' | '.join('{:>2}'.format(v) for v in totals)) 
+
+ 
