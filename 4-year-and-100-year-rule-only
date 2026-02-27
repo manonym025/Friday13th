@@ -1,0 +1,19 @@
+# Verify using actual years 2000-2699 with Jan 1, 2000 Saturday (5) under 4/100 rule
+WEEKDAYS = ['Mo','Di','Mi','Do','Fr','Sa','So']
+MONTHS_COMMON = [31,28,31,30,31,30,31,31,30,31,30,31]
+MONTHS_LEAP   = [31,29,31,30,31,30,31,31,30,31,30,31]
+from collections import Counter
+
+def is_leap_4_100(y: int) -> bool:
+    return (y % 4 == 0) and (y % 100 != 0)
+
+weekday_1jan = 5  # Saturday for 2000-01-01
+counts = Counter({i:0 for i in range(7)})
+for y in range(2000, 2700):
+    months = MONTHS_LEAP if is_leap_4_100(y) else MONTHS_COMMON
+    wd_first = weekday_1jan
+    for mlen in months:
+        counts[(wd_first + 12) % 7] += 1
+        wd_first = (wd_first + mlen) % 7
+    weekday_1jan = (weekday_1jan + (366 if is_leap_4_100(y) else 365)) % 7
+[[counts[i] for i in range(7)], sum(counts.values())]
