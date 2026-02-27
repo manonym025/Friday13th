@@ -1,0 +1,37 @@
+# Compute distribution of weekdays for the 13th between 2000-01-01 and 2399-12-31 inclusive
+# Gregorian leap year rule: divisible by 4; centuries only leap if divisible by 400
+# Weekday numbering: 0=Mo,1=Di,2=Mi,3=Do,4=Fr,5=Sa,6=So
+# Given: 2000-01-01 is Saturday -> weekday index 5
+
+WEEKDAYS = ['Mo','Di','Mi','Do','Fr','Sa','So']
+MONTHS_COMMON = [31,28,31,30,31,30,31,31,30,31,30,31]
+MONTHS_LEAP   = [31,29,31,30,31,30,31,31,30,31,30,31]
+
+
+def is_gregorian_leap(y: int) -> bool:
+    return (y % 4 == 0) and ((y % 100 != 0) or (y % 400 == 0))
+
+# We start at 2000 with known weekday of Jan 1
+start_year = 2000
+end_year = 2399
+weekday_1jan = 5  # Saturday
+
+from collections import Counter
+counts_total = Counter({i:0 for i in range(7)})
+
+for y in range(start_year, end_year+1):
+    months = MONTHS_LEAP if is_gregorian_leap(y) else MONTHS_COMMON
+    wd_first = weekday_1jan
+    for mlen in months:
+        wd13 = (wd_first + 12) % 7
+        counts_total[wd13] += 1
+        wd_first = (wd_first + mlen) % 7
+    # advance to next year's Jan 1 weekday
+    days_in_year = 366 if is_gregorian_leap(y) else 365
+    weekday_1jan = (weekday_1jan + days_in_year) % 7
+
+# Prepare results in order Mo..So
+sum_counts = [counts_total[i] for i in range(7)]
+# Sanity: should sum to number of months in range
+months_total = (end_year - start_year + 1) * 12
+sum_counts, months_total, sum(sum_counts)
